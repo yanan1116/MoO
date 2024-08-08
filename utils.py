@@ -3,179 +3,105 @@ import json
 import time
 import requests
 import openai
-import copy
-
+import copy,tiktoken
+from retrying import retry
 from loguru import logger
-
+from colorama import Fore,init
+init(autoreset=True)
 
 DEBUG = int(os.environ.get("DEBUG", "0"))
 
+# enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
-def generate_together(
-    model,
-    messages,
-    max_tokens=2048,
-    temperature=0.7,
-    streaming=False,
-):
+from transformers import AutoTokenizer
+enc = AutoTokenizer.from_pretrained('meta-llama/Meta-Llama-3.1-8B-Instruct')
 
-    output = None
+def cal_usage(messages):
+    return sum([len(enc.encode(i['content'])) for i in messages])
 
-    for sleep_time in [1, 2, 4, 8, 16, 32]:
+from together import Together
 
-        try:
-
-            endpoint = "https://api.together.xyz/v1/chat/completions"
-
-            if DEBUG:
-                logger.debug(
-                    f"Sending messages ({len(messages)}) (last message: `{messages[-1]['content'][:20]}...`) to `{model}`."
-                )
-
-            res = requests.post(
-                endpoint,
-                json={
-                    "model": model,
-                    "max_tokens": max_tokens,
-                    "temperature": (temperature if temperature > 1e-4 else 0),
-                    "messages": messages,
-                },
-                headers={
-                    "Authorization": f"Bearer {os.environ.get('TOGETHER_API_KEY')}",
-                },
-            )
-            if "error" in res.json():
-                logger.error(res.json())
-                if res.json()["error"]["type"] == "invalid_request_error":
-                    logger.info("Input + output is longer than max_position_id.")
-                    return None
-
-            output = res.json()["choices"][0]["message"]["content"]
-
-            break
-
-        except Exception as e:
-            logger.error(e)
-            if DEBUG:
-                logger.debug(f"Msgs: `{messages}`")
-
-            logger.info(f"Retry in {sleep_time}s..")
-            time.sleep(sleep_time)
-
-    if output is None:
-
-        return output
-
-    output = output.strip()
-
-    if DEBUG:
-        logger.debug(f"Output: `{output[:20]}...`.")
-
-    return output
+client = Together(api_key="")
 
 
-def generate_together_stream(
-    model,
-    messages,
-    max_tokens=2048,
-    temperature=0.7,
-):
-    endpoint = "https://api.together.xyz/v1"
-    client = openai.OpenAI(
-        api_key=os.environ.get("TOGETHER_API_KEY"), base_url=endpoint
-    )
-    endpoint = "https://api.together.xyz/v1/chat/completions"
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature if temperature > 1e-4 else 0,
-        max_tokens=max_tokens,
-        stream=True,  # this time, we set stream=True
-    )
-
-    return response
+def print_message(messages):
+    for i in messages:
+        print(i['role'], '===>')
+        print(i['content'])
 
 
-def generate_openai(
-    model,
-    messages,
-    max_tokens=2048,
-    temperature=0.7,
-):
 
-    client = openai.OpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY"),
-    )
 
-    for sleep_time in [1, 2, 4, 8, 16, 32]:
-        try:
-
-            if DEBUG:
-                logger.debug(
-                    f"Sending messages ({len(messages)}) (last message: `{messages[-1]['content'][:20]}`) to `{model}`."
-                )
-
-            completion = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
-            output = completion.choices[0].message.content
-            break
-
-        except Exception as e:
-            logger.error(e)
-            logger.info(f"Retry in {sleep_time}s..")
-            time.sleep(sleep_time)
-
-    output = output.strip()
-
-    return output
-
+review_prompt = """review the answer and response to the given question. 
+give your concise and brief feedback and opinion on the answer, no more than 200 words, 
+and check if there are any issues within the answer.
+If there is no issue or the answer is correct, just write the answer is correct.
+"""
 
 def inject_references_to_messages(
     messages,
     references,
+    reference_models
 ):
 
-    messages = copy.deepcopy(messages)
+    # system = "Take these following responses and answers from other agents into consideration for your response."
 
-    system = f"""You have been provided with a set of responses from various open-source models to the latest user query. Your task is to synthesize these responses into a single, high-quality response. It is crucial to critically evaluate the information provided in these responses, recognizing that some of it may be biased or incorrect. Your response should not simply replicate the given answers but should offer a refined, accurate, and comprehensive reply to the instruction. Ensure your response is well-structured, coherent, and adheres to the highest standards of accuracy and reliability.
-
-Responses from models:"""
-
+    system = "You have been provided with a set of responses from various open-source models to the latest user query. Your task is to synthesize these responses into a single, high-quality response. It is crucial to critically evaluate the information provided in these responses, recognizing that some of it may be biased or incorrect. Your response should not simply replicate the given answers but should offer a refined, accurate, and comprehensive reply to the instruction. Ensure your response is well-structured, coherent, and adheres to the highest standards of accuracy and reliability.\n\nResponses from models:"
     for i, reference in enumerate(references):
+        system += f"\nresponse from agent #{i+1}: {reference}"
+        
+        # inject feedback to each reference
+        if reference_models:
+            print(Fore.RED + "inject feedback to each reference")
+            prompt_feedback = messages + [{'role':'assistant', 'content':reference}, {'role':'user', 'content':review_prompt}]
+            usage = cal_usage(prompt_feedback)
+            print(Fore.RED + "prompt_feedback usage: {}".format(usage))
 
-        system += f"\n{i+1}. {reference}"
+            for j, reference_model in enumerate(reference_models):
+                print(Fore.GREEN + 'illicit feedback from {}'.format(reference_model) + '===>' )
+                response = client.chat.completions.create(model=reference_model, 
+                                                         messages=prompt_feedback, 
+                                                         max_tokens=512, 
+                                                         temperature=0)
+                feedback = response.choices[0].message.content.strip()
+                try:
+                    print(Fore.CYAN + feedback)
+                except:
+                    pass
+                system += f"\n \tagent #{j+1}'s feedback and comment on the response of agent #{i+1}: {feedback}\n"
+     
+        system +=  '\n-------------------------------------------\n'
+    
+    messages_copy = copy.deepcopy(messages)
+    assert messages_copy[0]['role'] == 'system'
+    # messages_copy[0]['content'] += system
+    # return messages_copy
+    return messages + [ {"role": "user", "content": system}]
 
-    if messages[0]["role"] == "system":
 
-        messages[0]["content"] += "\n\n" + system
-
-    else:
-
-        messages = [{"role": "system", "content": system}] + messages
-
-    return messages
-
-
+# @retry(stop_max_attempt_number=5, wait_random_min=1, wait_random_max=5)
 def generate_with_references(
     model,
     messages,
-    references=[],
-    max_tokens=2048,
-    temperature=0.7,
-    generate_fn=generate_together,
-):
+    references,
+    max_tokens,
+    temperature,
+    reference_models ):
 
     if len(references) > 0:
+        # print(Fore.CYAN + 'before injection===>')
+        # print_message(messages)
 
-        messages = inject_references_to_messages(messages, references)
+        messages = inject_references_to_messages(messages, references, reference_models)
 
-    return generate_fn(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
+        # print(Fore.CYAN + 'after injection<===')
+        # print_message(messages)
+
+    usage = cal_usage(messages)
+    print(Fore.RED + "generate_with_references usage: {}".format(usage))
+    # print(Fore.BLUE +  'illicit response from {}'.format(model))
+    response = client.chat.completions.create(model=model, messages=messages, max_tokens=max_tokens, temperature=temperature)
+    output = response.choices[0].message.content
+    return output.strip()
+
+
