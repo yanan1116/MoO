@@ -10,18 +10,8 @@ from colorama import Fore,init
 init(autoreset=True)
 
 DEBUG = int(os.environ.get("DEBUG", "0"))
-
-# enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
-
-from transformers import AutoTokenizer
-enc = AutoTokenizer.from_pretrained('meta-llama/Meta-Llama-3.1-8B-Instruct')
-
-def cal_usage(messages):
-    return sum([len(enc.encode(i['content'])) for i in messages])
-
 from together import Together
-
-client = Together(api_key="")
+client = Together()
 
 
 def print_message(messages):
@@ -54,8 +44,6 @@ def inject_references_to_messages(
         if reference_models:
             print(Fore.RED + "inject feedback to each reference")
             prompt_feedback = messages + [{'role':'assistant', 'content':reference}, {'role':'user', 'content':review_prompt}]
-            usage = cal_usage(prompt_feedback)
-            print(Fore.RED + "prompt_feedback usage: {}".format(usage))
 
             for j, reference_model in enumerate(reference_models):
                 print(Fore.GREEN + 'illicit feedback from {}'.format(reference_model) + '===>' )
@@ -97,8 +85,6 @@ def generate_with_references(
         # print(Fore.CYAN + 'after injection<===')
         # print_message(messages)
 
-    usage = cal_usage(messages)
-    print(Fore.RED + "generate_with_references usage: {}".format(usage))
     # print(Fore.BLUE +  'illicit response from {}'.format(model))
     response = client.chat.completions.create(model=model, messages=messages, max_tokens=max_tokens, temperature=temperature)
     output = response.choices[0].message.content
