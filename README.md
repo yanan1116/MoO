@@ -1,11 +1,8 @@
 
 # baseline: ICL and MoA(single layer), without any training
+the test set for gsm8k: https://huggingface.co/datasets/yananchen/gsm8k_shots_8
 ```bash
-
-# the test set for gsm8k: https://huggingface.co/datasets/yananchen/gsm8k_shots_8
-
 # pip install -U bitsandbytes;pip install -U peft
-
 # export MKL_SERVICE_FORCE_INTEL=TRUE
 
 python eval.py --ds yananchen/gsm8k_shots_8 \
@@ -14,25 +11,28 @@ python eval.py --ds yananchen/gsm8k_shots_8 \
 ```   
 
 # baseline: vanilla MoA, without any training
+
+this experiment is based on together.ai
+gsm8k as test task, rounds = layers
+
 ```bash
-# this experiment is based on together.ai
-# gsm8k as test task, rounds = layers
 python moa.py --bench gsm --rounds 2 
 ``` 
 
 
 # baseline: vanilla SFT and our method MoO (SFT with mixture of opinions): 
+sft script is officially provided by TRL: https://github.com/huggingface/trl/blob/main/trl/scripts/sft.py without any modifications
+parameters can be found here: https://huggingface.co/docs/trl/en/sft_trainer
+
+training set for `gsm8k` under SFT: https://huggingface.co/datasets/yananchen/gsm8k_sft
+training set for `gsm8k` under MoO: https://huggingface.co/datasets/yananchen/gsm8k_moa 
+
+for other task, replace `gsm8k` with `aqua` and `math`
+
+candidates LLMs can be meta-llama/Llama-3.2-1B-Instruct , meta-llama/Llama-3.1-8B-Instruct etc
+
+
 ```bash
-# sft script is officially provided by TRL: https://github.com/huggingface/trl/blob/main/trl/scripts/sft.py without any modifications
-# parameters can be found here: https://huggingface.co/docs/trl/en/sft_trainer
-
-# training set for `gsm8k` under SFT: https://huggingface.co/datasets/yananchen/gsm8k_sft
-# training set for `gsm8k` under MoO: https://huggingface.co/datasets/yananchen/gsm8k_moa 
-
-# for other task, replace `gsm8k`` with `aqua`` and `math``
-
-# candidates LLMs can be meta-llama/Llama-3.2-1B-Instruct , meta-llama/Llama-3.1-8B-Instruct etc
-
 python  ~/trl/trl/scripts/sft.py \
     --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --dataset_name yananchen/gsm8k_sft \
