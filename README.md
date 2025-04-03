@@ -15,8 +15,8 @@ python eval.py --ds yananchen/gsm8k_shots_8 \
 # baseline: vanilla MoA (full-version, with more layers), without any training
 ```bash
 
-# gsm8k as test task, layers=3, with feedbacks enabled from proposers
-python moa_vanilla.py --bnech gsm --rounds 3 --fb
+# gsm8k as test task, rounds = layers, with feedbacks enabled from proposers
+python moa_vanilla.py --bench gsm --rounds 1 --fb --samplecnt 30
 
 # we did not witness any gains when increasing the number of layers (>1) so not include it into the main experiments
 ``` 
