@@ -26,9 +26,10 @@ python moa.py --bench gsm --rounds 2
 # sft script is officially provided by TRL: https://github.com/huggingface/trl/blob/main/trl/scripts/sft.py without any modifications
 # parameters can be found here: https://huggingface.co/docs/trl/en/sft_trainer
 
-# training set for gsm8k under SFT: https://huggingface.co/datasets/yananchen/gsm8k_sft/
-# training set for gsm8k under MoO: https://huggingface.co/datasets/yananchen/gsm8k_moa 
+# training set for `gsm8k` under SFT: https://huggingface.co/datasets/yananchen/gsm8k_sft
+# training set for `gsm8k` under MoO: https://huggingface.co/datasets/yananchen/gsm8k_moa 
 
+# for other task, replace `gsm8k`` with `aqua`` and `math``
 
 # candidates LLMs can be meta-llama/Llama-3.2-1B-Instruct , meta-llama/Llama-3.1-8B-Instruct etc
 
