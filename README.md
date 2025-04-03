@@ -21,19 +21,14 @@ python moa.py --bench gsm --rounds 2
 
 
 # baseline: vanilla SFT and our method MoO (SFT with mixture of opinions): 
-sft script is officially provided by TRL: https://github.com/huggingface/trl/blob/main/trl/scripts/sft.py without any modifications
-parameters can be found here: https://huggingface.co/docs/trl/en/sft_trainer
 
 training set for `gsm8k` under SFT: https://huggingface.co/datasets/yananchen/gsm8k_sft
 training set for `gsm8k` under MoO: https://huggingface.co/datasets/yananchen/gsm8k_moa 
 
 for other task, replace `gsm8k` with `aqua` and `math`
 
-candidates LLMs can be meta-llama/Llama-3.2-1B-Instruct , meta-llama/Llama-3.1-8B-Instruct etc
-
-
 ```bash
-python  ~/trl/trl/scripts/sft.py \
+trl sft \
     --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --dataset_name yananchen/gsm8k_sft \
     --report_to "none" \
@@ -56,6 +51,7 @@ python  ~/trl/trl/scripts/sft.py \
     --bf16 True \
     --bf16_full_eval True \
     --max_seq_length 4096 \
+    --max_length 4096 \
     --eval_accumulation_steps 4 \
     --use_peft \
     --lora_r 16 \
