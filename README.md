@@ -37,14 +37,14 @@ python moa_vanilla.py --bench gsm --rounds 1 --fb --samplecnt 30
 # candidates LLMs can be meta-llama/Llama-3.2-1B-Instruct , meta-llama/Llama-3.1-8B-Instruct etc
 
 python  ~/trl/trl/scripts/sft.py \
-    --model_name_or_path meta-llama/Llama-3.2-1B-Instruct \
+    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --dataset_name yananchen/gsm8k_sft \
     --report_to "none" \
     --learning_rate 1e-4 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 4 \
-    --output_dir ~/moo/sft_gsm8k_llama32_4bit_1e4_nopack \
+    --output_dir ~/moo/sft_gsm8k_llama31 \
     --logging_steps 1 \
     --num_train_epochs 10 \
     --save_strategy "epoch" \
