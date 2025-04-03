@@ -13,16 +13,12 @@ python eval.py --ds yananchen/gsm8k_shots_8 \
         --maxlen 4096   
 ```   
 
-# baseline: vanilla MoA (full-version, with more layers), without any training
+# baseline: vanilla MoA, without any training
 ```bash
-
+# this experiment is based on together.ai
 # gsm8k as test task, rounds = layers
-python moa_vanilla.py --bench gsm --rounds 1  --samplecnt 100
-
-# we did not witness any substantial gains when increasing the number of layers (>1) so not include it into the main experiments
+python moa.py --bench gsm --rounds 2 
 ``` 
-
-
 
 
 # baseline: vanilla SFT and our method MoO (SFT with mixture of opinions): 
@@ -32,7 +28,6 @@ python moa_vanilla.py --bench gsm --rounds 1  --samplecnt 100
 
 # training set for gsm8k under SFT: https://huggingface.co/datasets/yananchen/gsm8k_sft/
 # training set for gsm8k under MoO: https://huggingface.co/datasets/yananchen/gsm8k_moa 
-
 
 
 # candidates LLMs can be meta-llama/Llama-3.2-1B-Instruct , meta-llama/Llama-3.1-8B-Instruct etc
@@ -69,7 +64,7 @@ python  ~/trl/trl/scripts/sft.py \
     --load_in_4bit \
     --attn_implementation 'flash_attention_2'
 
-    # other parameters can be tested
+    # other parameters can be tried
     #--warmup_ratio 0.1
     #--load_in_8bit   
 ```
@@ -81,10 +76,10 @@ python  ~/trl/trl/scripts/sft.py \
 # SFT
 for task in gsm8k aqua math 
 do
-python eval.py --ds yananchen/${task}_sft \
-        --llm_name meta-llama/Llama-3.1-8B-Instruct \
-        --maxlen 4096 \
-        --sft_path  ~/moo/sft_${task}_llama31 
+    python eval.py --ds yananchen/${task}_sft \
+            --llm_name meta-llama/Llama-3.1-8B-Instruct \
+            --maxlen 4096 \
+            --sft_path  ~/moo/sft_${task}_llama31 
 done
 
 
