@@ -24,12 +24,12 @@ reference_models = [
                     'mistralai/Mistral-7B-Instruct-v0.1', 
                     'mistralai/Mistral-7B-Instruct-v0.2', 
                     'mistralai/Mistral-7B-Instruct-v0.3',
-                    "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
                     "meta-llama/Llama-3.2-3B-Instruct-Turbo",
                     "google/gemma-2-9b-it"
                     ]
 
-aggregator_model =  "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo" # or use meta-llama/Llama-3.3-70B-Instruct-Turbo
+aggregator_model =  "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+# larger models can be tested also: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo" # or use meta-llama/Llama-3.3-70B-Instruct-Turbo
 
 
 if args.bench == 'gsm':
@@ -160,14 +160,14 @@ for ii in ds[split].shuffle().select(range(args.samplecnt)):
             )
 
     # comparative method, have references and feedbacks from proposers
-    output_fb = generate_with_references(
-            model=aggregator_model,
-            messages=messages,
-            references=references,
-            temperature=0,
-            max_tokens=args.max_tokens,
-            reference_models = reference_models 
-            )
+    # output_fb = generate_with_references(
+    #         model=aggregator_model,
+    #         messages=messages,
+    #         references=references,
+    #         temperature=0,
+    #         max_tokens=args.max_tokens,
+    #         reference_models = reference_models 
+    #         )
 
 
     try:
@@ -175,7 +175,7 @@ for ii in ds[split].shuffle().select(range(args.samplecnt)):
         print(Fore.WHITE + "oracle answer===>\n" + ii["answer"])
         print(Fore.YELLOW  + "output_0===>\n", output_0, '\n')
         print(Fore.MAGENTA + "output_1===>\n" + output_1, '\n')
-        print(Fore.GREEN +   "output_fb===>\n" + output_fb, '\n')
+        # print(Fore.GREEN +   "output_fb===>\n" + output_fb, '\n')
         print('='*20)
     except:
         pass
@@ -192,7 +192,7 @@ for ii in ds[split].shuffle().select(range(args.samplecnt)):
     print('with references but no feedbacks:')
     calculate_reports(acc_moa, f1, em, output_1, ii)
 
-    print('with references and feedbacks:')
-    calculate_reports(acc_moa_fb, f1_fb, em_fb, output_fb, ii)
+    # print('with references and feedbacks:')
+    # calculate_reports(acc_moa_fb, f1_fb, em_fb, output_fb, ii)
 
 

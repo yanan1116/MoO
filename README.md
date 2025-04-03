@@ -4,7 +4,8 @@
 
 # the test set for gsm8k: https://huggingface.co/datasets/yananchen/gsm8k_shots_8
 
-# pip install -U bitsandbytes,peft
+# pip install -U bitsandbytes;pip install -U peft
+
 # export MKL_SERVICE_FORCE_INTEL=TRUE
 
 python eval.py --ds yananchen/gsm8k_shots_8 \
@@ -15,10 +16,10 @@ python eval.py --ds yananchen/gsm8k_shots_8 \
 # baseline: vanilla MoA (full-version, with more layers), without any training
 ```bash
 
-# gsm8k as test task, rounds = layers, with feedbacks enabled from proposers
-python moa_vanilla.py --bench gsm --rounds 1 --fb --samplecnt 30
+# gsm8k as test task, rounds = layers
+python moa_vanilla.py --bench gsm --rounds 1  --samplecnt 100
 
-# we did not witness any gains when increasing the number of layers (>1) so not include it into the main experiments
+# we did not witness any substantial gains when increasing the number of layers (>1) so not include it into the main experiments
 ``` 
 
 
@@ -70,8 +71,7 @@ python  ~/trl/trl/scripts/sft.py \
 
     # other parameters can be tested
     #--warmup_ratio 0.1
-    #--load_in_8bit  
-    #--attn_implementation 'flash_attention_2'  
+    #--load_in_8bit   
 ```
 
 
