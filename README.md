@@ -1,3 +1,6 @@
+# Weaker LLMs' Opinions Also Matter: Mixture of Opinions Enhances LLM's Mathematical Reasoning
+This repo is the source codebase for paper: https://arxiv.org/abs/2502.19622
+
 
 # baseline: ICL and MoA(single layer), without any training
 the test set for gsm8k: https://huggingface.co/datasets/yananchen/gsm8k_shots_8
